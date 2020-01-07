@@ -1,12 +1,9 @@
 import java.awt.Color;
-import java.util.Stack;
-
 
 public class BeadFinder {
 
-
     private final Stack<Blob> blobStack; // Stack of blobs
-    private final Stack<int[]> searchedPixels; // Stack of searched pixels
+    private final boolean[][] searchedPixels; // Stack of searched pixels
     private final double tau; // luminance threshold
     private final Picture picture; // picture
 
@@ -14,40 +11,42 @@ public class BeadFinder {
     public BeadFinder(Picture picture, double tau) {
 
         this.blobStack = new Stack<Blob>();
-        this.searchedPixels = new Stack<int[]>();
+
 
         this.picture = picture;
         int w = picture.width();
         int h = picture.height();
 
+        this.searchedPixels = new boolean[w][h];
         this.tau = tau;
+
+        // figure out a way to store the pixels
 
         // Iterate over all pixels
         for (int i = 0; i < w; i++) {
             for (int j = 0; j < h; j++) {
+                if (searchedPixels[i][j] = false) {
 
-                Color c = picture.get(i, j);
-                double luminance = Luminance.intensity(c);
+                    Color c = picture.get(i, j);
+                    double luminance = Luminance.intensity(c);
 
-                // If the pixel is above threshold, create a blob
-                if (luminance >= tau) {
-                    Blob blob = new Blob();
-                    this.dfs(blob, i, j);
-                    blobStack.push(blob);
+                    // If the pixel is above threshold, create a blob
+                    if (luminance >= tau) {
+                        Blob blob = new Blob();
+                        this.dfs(blob, i, j);
+                        blobStack.push(blob);
+                    }
+                    else searchedPixels[i][j] = true;
                 }
             }
         }
     }
 
-
-
     // locates all of the foreground pixels in the same blob as the foreground
     // pixel (x, y)
     private void dfs(Blob blob, int x, int y) {
 
-        int[] pixel = new int[2];
-        pixel[0] = x;
-        pixel[1] = y;
+        blob.add(x, y);
 
         Color c = picture.get(x, y);
         int w = picture.width();
@@ -55,26 +54,35 @@ public class BeadFinder {
 
         double luminance = Luminance.intensity(c);
 
-        if (luminance >= this.tau && this.searchedPixels.contains(pixel)) {
 
-            blob.add(x, y);
-            this.searchedPixels.push(pixel);
+        for (int i = 0; i <= searchedPixels.length; i++) {
+            for (int j = 0; j <= searchedPixels.length; j++) {
+                if (!searchedPixels[i][j] && luminance >= this.tau) {
 
-            if (x != 0) {
-                dfs(blob, x-1, y);
-            }
-            if (y != 0) {
-                dfs(blob, x, y-1);
-            }
-            if (x != w - 1) {
-                dfs(blob, x+1, y);
-            }
-            if (y != h - 1) {
-                dfs(blob, x, y+1);
+
+                    blob.add(x, y);
+                    // this.searchedPixels.push(pixel);
+
+                    if (x != 0) {
+                        dfs(blob, x - 1, y);
+                    }
+                    if (y != 0) {
+                        dfs(blob, x, y - 1);
+                    }
+                    if (x != w - 1) {
+                        dfs(blob, x + 1, y);
+                    }
+                    if (y != h - 1) {
+                        dfs(blob, x, y + 1);
+
+
+                    }
+                }
+
+
             }
         }
     }
-
 
     //  returns all beads (blobs with >= min pixels)
     public Blob[] getBeads(int min) {
@@ -103,17 +111,20 @@ public class BeadFinder {
     }
 
     //  test client, as described below
-    public static void main(String[] args) {
 
-        int min = 0;
-        double tau = 180.0;
-        Picture image = new Picture("Data/run_1/frame00001.jpg");
+    //  test client, as described below
+    public static void main(String[] args) {
+        int min = Integer.parseInt(args[0]);
+        double tau = Double.parseDouble(args[1]);
+        Picture image = new Picture(args[2]);
 
         BeadFinder finder = new BeadFinder(image, tau);
         Blob[] beads = finder.getBeads(min);
 
         for (int i = 0; i < beads.length; i++) {
-            System.out.println(beads[i]);
+            StdOut.println(beads[i].toString());
         }
     }
 }
+
+// Arrays.asList(myBooleanArray).contains(true);
